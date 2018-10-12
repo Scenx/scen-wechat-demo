@@ -22,7 +22,7 @@ import java.io.IOException;
  */
 @Controller
 @RequestMapping("/weixin/jieru")
-public class Wq2WeixinController {
+public class Scen2WeixinController {
     @Autowired
     private IMessageHandler messageHandler;
     
