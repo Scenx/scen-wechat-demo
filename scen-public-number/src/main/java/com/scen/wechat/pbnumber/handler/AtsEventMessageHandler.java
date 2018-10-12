@@ -51,7 +51,7 @@ public class AtsEventMessageHandler implements IEventMessageHandler {
     @Override
     public OutputMessage click(ClickEventMessage msg) {
         TextOutputMessage out = new TextOutputMessage();
-        out.setContent("点击了菜单！");
+        out.setContent("点击了菜单！" + msg.getEventKey());
         return out;
     }
     

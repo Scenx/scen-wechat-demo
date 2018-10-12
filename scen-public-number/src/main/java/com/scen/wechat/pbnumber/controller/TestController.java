@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.weixin4j.WeixinException;
+import org.weixin4j.model.menu.ClickButton;
+import org.weixin4j.model.menu.Menu;
+import org.weixin4j.model.menu.SingleButton;
 import org.weixin4j.model.message.template.TemplateData;
 import org.weixin4j.model.qrcode.QrcodeType;
 import org.weixin4j.spring.WeixinTemplate;
@@ -220,4 +223,60 @@ public class TestController {
             return ScenResult.build(500, "创建二维码失败");
         }
     }
+    
+    
+    /**
+     * 长链接转短链接
+     *
+     * @return 短链接
+     */
+    @RequestMapping("/shortUrl")
+    public ScenResult shortUrl() {
+        try {
+            return ScenResult.ok(weixinTemplate.base().shortUrl("http://" + oauthUrl + "/shortUrl"));
+        } catch (WeixinException e) {
+            logger.error("长链接转短链接失败");
+            e.printStackTrace();
+            return ScenResult.build(500, "长链接转短链接失败");
+        }
+    }
+    
+    /**
+     * 创建自定义菜单
+     *
+     * @return 成功或失败信息
+     */
+    @RequestMapping("/createMenu")
+    public ScenResult createMenu() {
+        try {
+            Menu menu = new Menu();
+            SingleButton singleButton = new SingleButton("Scen");
+            List<SingleButton> singleButtonList = new ArrayList<>();
+            singleButtonList.add(new ClickButton("Scen1号", "Scen1号"));
+            singleButtonList.add(new ClickButton("Scen2号", "Scen2号"));
+            singleButtonList.add(new ClickButton("Scen3号", "Scen2号"));
+            singleButton.setSubButton(singleButtonList);
+            
+            
+            SingleButton singleButton1 = new SingleButton("小红");
+            List<SingleButton> singleButtonList1 = new ArrayList<>();
+            singleButtonList1.add(new ClickButton("小红1号", "小红1号"));
+            singleButtonList1.add(new ClickButton("小红2号", "小红2号"));
+            singleButtonList1.add(new ClickButton("小红3号", "小红3号"));
+            singleButton1.setSubButton(singleButtonList1);
+            
+            List<SingleButton> singleButtonList2 = new ArrayList<>();
+            singleButtonList2.add(singleButton);
+            singleButtonList2.add(singleButton1);
+            menu.setButton(singleButtonList2);
+            weixinTemplate.menu().create(menu);
+            return ScenResult.ok();
+        } catch (Exception e) {
+            logger.error("创建自定义菜单失败");
+            e.printStackTrace();
+            return ScenResult.build(500, "创建自定义菜单失败");
+        }
+    }
+    
+    
 }
