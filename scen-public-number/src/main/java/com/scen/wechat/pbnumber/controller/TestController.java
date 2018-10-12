@@ -9,9 +9,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.weixin4j.WeixinException;
+import org.weixin4j.model.message.template.TemplateData;
+import org.weixin4j.model.qrcode.QrcodeType;
 import org.weixin4j.spring.WeixinTemplate;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Scen
@@ -31,11 +37,14 @@ public class TestController {
     @Value("${my.openid}")
     private String openId;
     
+    @Value("${wx.templateid}")
+    private String templateId;
+    
     
     /**
      * 获取普通access_token
      *
-     * @return
+     * @return 普通access_token
      */
     @RequestMapping("/getAccessToken")
     public ScenResult getAccessToken() {
@@ -55,7 +64,7 @@ public class TestController {
     /**
      * 获取微信服务器ip地址
      *
-     * @return
+     * @return 微信服务器ip地址列表
      */
     @RequestMapping("/getcallbackip")
     public ScenResult getcallbackip() {
@@ -72,7 +81,7 @@ public class TestController {
     /**
      * 获取用户基本信息
      *
-     * @return
+     * @return 用户基本信息
      */
     @RequestMapping("/userInfo")
     public ScenResult userInfo(String code, HttpServletResponse response) {
@@ -81,7 +90,10 @@ public class TestController {
                 response.sendRedirect(weixinTemplate.sns().getOAuth2CodeUserInfoUrl("http://" + oauthUrl + "/userInfo"));
                 return null;
             } else {
-                return ScenResult.ok(weixinTemplate.sns().getSnsUserByCode(code));
+                Map<String, Object> map = new HashMap<>(2);
+                map.put("snsUserInfo", weixinTemplate.sns().getSnsUserByCode(code));
+                map.put("userInfo", weixinTemplate.user().info(openId));
+                return ScenResult.ok(map);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -94,7 +106,7 @@ public class TestController {
     /**
      * 客服发送消息
      *
-     * @return
+     * @return 成功或失败信息
      */
     @RequestMapping("/customSendContent")
     public ScenResult customSendContent() {
@@ -111,7 +123,7 @@ public class TestController {
     /**
      * 客服群发消息
      *
-     * @return
+     * @return 成功或失败信息
      */
     @RequestMapping("/massSendContent")
     public ScenResult massSendContent() {
@@ -125,6 +137,87 @@ public class TestController {
             e.printStackTrace();
             logger.error("客服群发消息失败");
             return ScenResult.build(500, "客服群发消息失败");
+        }
+    }
+    
+    
+    /**
+     * 发送模板消息
+     *
+     * @return 成功或失败信息
+     */
+    @RequestMapping("/sendTemplateMessage")
+    public ScenResult sendTemplateMessage() {
+        try {
+            TemplateData templateData = new TemplateData();
+            templateData.setKey("这是key");
+            templateData.setValue("这是value");
+            templateData.setColor("red");
+            List<TemplateData> templateDataList = new ArrayList<>();
+            templateDataList.add(templateData);
+            weixinTemplate.message().sendTemplateMessage(openId, templateId, templateDataList);
+            return ScenResult.ok();
+        } catch (WeixinException e) {
+            logger.error("发送模板消息失败templateId：" + templateId);
+            e.printStackTrace();
+            return ScenResult.build(500, "发送模板消息失败templateId：" + templateId);
+        }
+    }
+    
+    /**
+     * 设置用户备注名
+     *
+     * @return 成功或失败信息
+     */
+    @RequestMapping("/updateRemark")
+    public ScenResult updateRemark() {
+        try {
+            weixinTemplate.user().updateRemark(openId, "华子");
+            return ScenResult.ok();
+        } catch (WeixinException e) {
+            logger.error("设置用户备注名失败openid:" + openId);
+            e.printStackTrace();
+            return ScenResult.build(500, "设置用户备注名失败openid:" + openId);
+        }
+    }
+    
+    /**
+     * 获取所有用户列表
+     *
+     * @return 用户列表
+     */
+    @RequestMapping("/getAll")
+    public ScenResult getAll() {
+        try {
+            return ScenResult.ok(weixinTemplate.user().getAll());
+        } catch (WeixinException e) {
+            logger.error("获取所有用户列表失败");
+            e.printStackTrace();
+            return ScenResult.build(500, "获取所有用户列表失败");
+        }
+    }
+    
+    /**
+     * 创建二维码
+     *
+     * @return 图片（二维码地址）
+     */
+    @RequestMapping("/createQrcode")
+    public ScenResult createQrcode() {
+        try {
+            return ScenResult.ok(
+                    weixinTemplate.
+                            qrcode().
+                            showQrcode(
+                                    weixinTemplate.qrcode().create(
+                                            QrcodeType.QR_SCENE, 1, 1800
+                                    ).getTicket()
+                            )
+            );
+        } catch (WeixinException e) {
+            logger.error("创建二维码失败");
+            e.printStackTrace();
+            return ScenResult.build(500, "创建二维码失败");
         }
     }
 }
